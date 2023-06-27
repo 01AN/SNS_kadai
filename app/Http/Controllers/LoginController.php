@@ -2,90 +2,50 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller,
+    Session;
 
 class LoginController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * ログイン画面遷移
      */
     public function index()
     {
-        //
+        $errorMessage = null;
+        return view('login', compact('errorMessage'));
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     * ログイン処理
      */
-    public function create()
+    public function login(Request $request)
     {
-        // セッションにログイン情報があるか確認
-        if (!Session::exists('user')) {
-            // ログインしていなければログインページへ
-            return redirect('/login');
+        // 入力されたユーザーが存在するか確認
+        $user = User::where('email', $request->email)->first();
+        $errorMessage = 'ユーザーが存在しないかパスワードが間違っています';
+        if ($user == null) {
+            return view('login', compact('errorMessage'));
         }
 
-        // 画面表示
-        return view('post.index');
+        // パスワードがあっているか確認
+        if ($user->password != $request->password) {
+            return view('login', compact('errorMessage'));
+        }
+
+        // 成功
+        Session::put('user', $user);
+        return redirect('/');
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * ログアウト処理
      */
-    public function store(Request $request)
+    public function logout(Request $request)
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        $request->session()->flush();
+        return redirect('/login');
     }
 }
